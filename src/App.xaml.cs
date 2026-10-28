@@ -1,8 +1,4 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Windows;
-using zywrite.Core;
-using System.Diagnostics;
+﻿using System.Windows;
 
 namespace zywrite
 {
