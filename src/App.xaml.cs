@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using zywrite.Core;
 
 namespace zywrite
 {
@@ -8,7 +9,6 @@ namespace zywrite
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            CreateMutex();
             AppStartUp();
             base.OnStartup(e);
         }
@@ -16,7 +16,6 @@ namespace zywrite
         protected override void OnExit(ExitEventArgs e)
         {
             AppShutdown();
-            DisposeMutex();
             base.OnExit(e);
         }
 
@@ -38,14 +37,14 @@ namespace zywrite
             _mutex?.Dispose();
         }
 
-        private void AppStartUp()
+        private static void AppStartUp()
         {
-
+            CreateMutex();
         }
 
-        private void AppShutdown()
+        private static void AppShutdown()
         {
-
+            DisposeMutex();
         }
     }
 }

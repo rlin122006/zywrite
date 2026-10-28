@@ -2,6 +2,7 @@
 {
     public enum Keycodes
     {
+        // control keys
         vkBackspace = 0x8,
         vkTab = 0x9,
         vkEnter = 0x0D,

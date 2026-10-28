@@ -13,8 +13,4 @@
     <Page Include="App.xaml" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Assets\" />
-  </ItemGroup>
-
 </Project>

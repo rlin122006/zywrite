@@ -1,17 +1,29 @@
 ﻿using System.Runtime.InteropServices;
+using static zywrite.Core.CharacterMapper;
 
 namespace zywrite.Core
 {
-    public static class Typer
+    public static partial class Typer
     {
-        private const uint INPUT_KEYBOARD = 1;
-        private const uint KEYEVENTF_KEYUP = 0x0002;
-
+        # region SendInput Function (copy and pasted from Microsoft don't touch)
         [StructLayout(LayoutKind.Sequential)]
         private struct INPUT
         {
             public uint type;
+            public INPUTUNION U;
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        private struct INPUTUNION
+        {
+            [FieldOffset(0)]
+            public MOUSEINPUT mi;
+
+            [FieldOffset(0)]
             public KEYBDINPUT ki;
+
+            [FieldOffset(0)]
+            public HARDWAREINPUT hi;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -24,26 +36,78 @@ namespace zywrite.Core
             public UIntPtr dwExtraInfo;
         }
 
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MOUSEINPUT
+        {
+            public int dx;
+            public int dy;
+            public uint mouseData;
+            public uint dwFlags;
+            public uint time;
+            public UIntPtr dwExtraInfo;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct HARDWAREINPUT
+        {
+            public uint uMsg;
+            public ushort wParamL;
+            public ushort wParamH;
+        }
+
+        [LibraryImport("user32.dll", SetLastError = true)]
+        private static partial uint SendInput(uint nInputs, [In] INPUT[] pInputs, int cbSize);
 
         private static INPUT CreateKeyInput(int vkCode, bool keyUp = false)
         {
             return new INPUT
             {
-                type = INPUT_KEYBOARD,
-                ki = new KEYBDINPUT
+                type = 1, // INPUT_KEYBOARD
+                U = new INPUTUNION
                 {
-                    wVk = (ushort)vkCode,
-                    wScan = 0,
-                    dwFlags = keyUp ? KEYEVENTF_KEYUP : 0,
-                    time = 0,
-                    dwExtraInfo = UIntPtr.Zero
+                    ki = new KEYBDINPUT
+                    {
+                        wVk = (ushort)vkCode,
+                        wScan = 0,
+                        dwFlags = keyUp ? 0x0002u : 0u,
+                        time = 0,
+                        dwExtraInfo = UIntPtr.Zero
+                    }
                 }
             };
         }
+        # endregion
 
-        public static void PressKey(int vkCode)
+        // ingests string
+        public static async Task TypeString(string text)
+        {
+            await Task.Delay(1000);
+
+            foreach (char character in text)
+            {
+                // processes every character one at a time
+                await TypeCharacter(character);
+            }
+        }
+
+        private static async Task TypeCharacter(char character)
+        {
+            // calls mapper to get action for character
+            KeyAction action = GetAction(character);
+
+            // executes tpying action
+            if (action.ShiftRequired)
+            {
+                await PressShiftedKey(action.VkCode);
+            }
+            else
+            {
+                await PressKey(action.VkCode);
+            }
+        }
+
+        // normal key
+        private async static Task PressKey(int vkCode)
         {
             INPUT[] inputs =
             [
@@ -59,7 +123,8 @@ namespace zywrite.Core
             }
         }
 
-        public static void PressShiftedKey(int vkCode)
+        // shifted key
+        private async static Task PressShiftedKey(int vkCode)
         {
             INPUT[] inputs =
             [
